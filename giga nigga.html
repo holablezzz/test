@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>i keep running out of gizmo hearts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#171D1B;
+  --surface:#212925;
+  --surface-alt:#283029;
+  --card:#1B2220;
+  --text:#F1F0E8;
+  --text-dim:#9AA69E;
+  --text-faint:#67716A;
+  --good:#4CC38A;
+  --good-dim:#274538;
+  --warn:#E8A33D;
+  --warn-dim:#453522;
+  --bad:#E1553D;
+  --bad-dim:#432420;
+  --border:#384039;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'JetBrains Mono',monospace;}
+.wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px;}
+
+.device{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:22px 24px;
+  margin-bottom:20px;
+}
+.device-top{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:16px;flex-wrap:wrap;
+}
+.eyebrow{
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text-dim);font-family:'JetBrains Mono',monospace;
+}
+h1{
+  font-size:26px;font-weight:700;margin:6px 0 4px;letter-spacing:-0.01em;
+}
+.subtitle{color:var(--text-dim);font-size:14px;margin:0;max-width:52ch;line-height:1.5;}
+
+.gauge-box{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  min-width:150px;
+}
+.gauge-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-family:'JetBrains Mono',monospace;}
+.gauge-value{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text);margin-top:2px;}
+
+.tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.tab{
+  font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.04em;
+  padding:9px 16px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text-dim);cursor:pointer;
+  transition:all .15s ease;
+}
+.tab:hover{border-color:var(--text-faint);color:var(--text);}
+.tab.active{background:var(--good-dim);color:var(--good);border-color:var(--good);}
+
+.panel{display:none;}
+.panel.active{display:block;}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.chip{
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  padding:6px 12px;border-radius:20px;border:1px solid var(--border);
+  background:transparent;color:var(--text-dim);cursor:pointer;
+}
+.chip.active{background:var(--surface-alt);color:var(--text);border-color:var(--text-faint);}
+
+.card-stage{display:flex;flex-direction:column;align-items:center;gap:18px;}
+.flashcard{
+  width:100%;max-width:640px;min-height:220px;
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:32px;display:flex;flex-direction:column;justify-content:center;
+  position:relative;
+}
+.flashcard .tag{
+  position:absolute;top:16px;left:20px;font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);
+}
+.flashcard .id{
+  position:absolute;top:16px;right:20px;font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--text-faint);
+}
+.flashcard .face-label{
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text-faint);margin-bottom:10px;
+}
+.flashcard .content{font-size:19px;line-height:1.5;font-weight:500;}
+.hint{font-size:12px;color:var(--text-faint);text-align:center;}
+.card-controls{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
+button.ctrl{
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  background:var(--surface);color:var(--text);border:1px solid var(--border);
+  padding:10px 16px;border-radius:8px;cursor:pointer;
+}
+button.ctrl:hover{border-color:var(--text-faint);}
+button.ctrl.primary{background:var(--good-dim);color:var(--good);border-color:var(--good);}
+.progress-track{
+  width:100%;max-width:640px;height:4px;background:var(--surface-alt);
+  border-radius:2px;overflow:hidden;
+}
+.progress-fill{height:100%;background:var(--good);transition:width .2s ease;}
+
+/* answer input area */
+.answer-row{
+  width:100%;max-width:640px;display:flex;gap:8px;
+}
+.answer-input{
+  flex:1;padding:12px 14px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-family:'Inter',sans-serif;
+  font-size:14px;
+}
+.answer-input::placeholder{color:var(--text-faint);}
+.answer-input:focus{outline:none;border-color:var(--text-faint);}
+button.submit-btn{
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  background:var(--good-dim);color:var(--good);border:1px solid var(--good);
+  padding:0 18px;border-radius:8px;cursor:pointer;
+}
+button.submit-btn:hover{opacity:.85;}
+
+.reveal-box{
+  width:100%;max-width:640px;background:var(--surface-alt);
+  border:1px solid var(--border);border-radius:10px;padding:16px 18px;
+  display:none;
+}
+.reveal-box.show{display:block;}
+.reveal-box .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);margin-bottom:6px;}
+.reveal-box .your-ans{color:var(--text-dim);font-size:14px;margin-bottom:10px;line-height:1.5;}
+.reveal-box .correct-ans{color:var(--text);font-size:14px;line-height:1.5;}
+
+.quiz-score{
+  display:flex;gap:20px;margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-size:13px;
+}
+.quiz-score span.n{color:var(--text);font-weight:700;}
+.quiz-score .good-txt{color:var(--good);}
+.quiz-score .bad-txt{color:var(--bad);}
+.judge-row{display:flex;gap:10px;justify-content:center;margin-top:16px;}
+button.judge{
+  font-family:'JetBrains Mono',monospace;font-size:13px;padding:11px 20px;border-radius:8px;
+  border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--text);
+}
+button.judge.correct{border-color:var(--good);color:var(--good);}
+button.judge.wrong{border-color:var(--bad);color:var(--bad);}
+button.judge.correct:hover{background:var(--good-dim);}
+button.judge.wrong:hover{background:var(--bad-dim);}
+.quiz-done{text-align:center;padding:40px 20px;}
+.quiz-done .big{font-family:'JetBrains Mono',monospace;font-size:44px;color:var(--good);}
+
+.search{
+  width:100%;padding:12px 14px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-family:'Inter',sans-serif;
+  font-size:14px;margin-bottom:16px;
+}
+.search::placeholder{color:var(--text-faint);}
+.qa-list{display:flex;flex-direction:column;gap:10px;}
+.qa-item{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:16px 18px;
+}
+.qa-item .qtag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.qa-item .q{font-weight:600;margin-bottom:6px;line-height:1.4;}
+.qa-item .a{color:var(--text-dim);font-size:14px;line-height:1.5;}
+.empty-state{text-align:center;color:var(--text-faint);padding:40px;font-size:14px;}
+
+footer{
+  text-align:center;color:var(--text-faint);font-size:12px;margin-top:40px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+@media(max-width:600px){
+  h1{font-size:21px;}
+  .flashcard{padding:22px;min-height:190px;}
+  .flashcard .content{font-size:16px;}
+  .device-top{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="device">
+    <div class="device-top">
+      <div>
+        <div class="eyebrow">paz</div>
+        <h1>Oral defense reviewer</h1>
+        <p class="subtitle">possible questions (generated by israelgpt).</p>
+      </div>
+      <div class="gauge-box">
+        <div class="gauge-label">Readiness</div>
+        <svg id="gaugeSvg" width="140" height="80" viewBox="0 0 140 80">
+          <path d="M 10 75 A 60 60 0 0 1 130 75" fill="none" stroke="#384039" stroke-width="10" stroke-linecap="round"/>
+          <path id="gaugeArc" d="M 10 75 A 60 60 0 0 1 130 75" fill="none" stroke="#E1553D" stroke-width="10" stroke-linecap="round" stroke-dasharray="188.5" stroke-dashoffset="188.5"/>
+          <line id="gaugeNeedle" x1="70" y1="75" x2="70" y2="25" stroke="#F1F0E8" stroke-width="2" stroke-linecap="round" transform="rotate(-90 70 75)"/>
+          <circle cx="70" cy="75" r="4" fill="#F1F0E8"/>
+        </svg>
+        <div class="gauge-value mono"><span id="gaugeText">0 / 0 answered</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-panel="flash">Flashcards</button>
+    <button class="tab" data-panel="quiz">Quiz</button>
+    <button class="tab" data-panel="browse">Browse all</button>
+  </div>
+
+  <div class="chips" id="chipRow"></div>
+
+  <!-- FLASHCARDS -->
+  <div class="panel active" id="panel-flash">
+    <div class="card-stage">
+      <div class="progress-track"><div class="progress-fill" id="flashProgress"></div></div>
+      <div class="flashcard" id="flashcard">
+        <span class="tag" id="flashTag">general</span>
+        <span class="id mono" id="flashId">1 / 100</span>
+        <div class="face-label">Question</div>
+        <div class="content" id="flashContent"></div>
+      </div>
+      <div class="answer-row">
+        <input type="text" class="answer-input" id="flashInput" placeholder="Type your answer…" onkeydown="if(event.key==='Enter'){submitFlash();}">
+        <button class="submit-btn" onclick="submitFlash()">Submit</button>
+      </div>
+      <div class="reveal-box" id="flashReveal">
+        <div class="lbl">Your answer</div>
+        <div class="your-ans" id="flashYourAns"></div>
+        <div class="lbl">Correct answer</div>
+        <div class="correct-ans" id="flashCorrectAns"></div>
+      </div>
+      <div class="hint">type and submit (u can skip or go prev basicaly peek so dw)</div>
+      <div class="card-controls">
+        <button class="ctrl" onclick="prevCard()">&larr; Prev</button>
+        <button class="ctrl" onclick="nextCard()">Next &rarr;</button>
+        <button class="ctrl" onclick="shuffleCards()">Shuffle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="panel" id="panel-quiz">
+    <div class="quiz-score">
+      <div><span class="n" id="quizCount">0</span> / <span id="quizTotal">0</span> reviewed</div>
+      <div class="good-txt"><span class="n" id="quizGood">0</span> knew it</div>
+      <div class="bad-txt"><span class="n" id="quizBad">0</span> needs review</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="quizProgress"></div></div>
+    <div class="card-stage" style="margin-top:16px;">
+      <div class="flashcard" id="quizCard">
+        <span class="tag" id="quizTag">general</span>
+        <span class="id mono" id="quizId">1 / 100</span>
+        <div class="face-label">Question</div>
+        <div class="content" id="quizContent"></div>
+      </div>
+      <div class="answer-row" id="quizAnswerRow">
+        <input type="text" class="answer-input" id="quizInput" placeholder="Type your answer…" onkeydown="if(event.key==='Enter'){submitQuiz();}">
+        <button class="submit-btn" onclick="submitQuiz()">Submit</button>
+      </div>
+      <div class="reveal-box" id="quizReveal">
+        <div class="lbl">Your answer</div>
+        <div class="your-ans" id="quizYourAns"></div>
+        <div class="lbl">Correct answer</div>
+        <div class="correct-ans" id="quizCorrectAns"></div>
+      </div>
+      <div class="hint" id="quizHint">Type your answer and submit to check yourself</div>
+      <div class="judge-row" id="judgeRow" style="display:none;">
+        <button class="judge wrong" onclick="judge(false)">Needs review</button>
+        <button class="judge correct" onclick="judge(true)">Knew it</button>
+      </div>
+      <button class="ctrl" onclick="restartQuiz()">Restart quiz</button>
+    </div>
+  </div>
+
+  <!-- BROWSE -->
+  <div class="panel" id="panel-browse">
+    <input class="search" id="searchBox" placeholder="Search questions or answers…" oninput="renderBrowse()">
+    <div class="qa-list" id="qaList"></div>
+  </div>
+
+  <footer>div class"panel id=panel-browse</footer>
+</div>
+
+<script>
+const DATA = [
+["general","Main problem addressed by the study?","Air pollution and poor indoor air quality."],
+["general","Why is air pollution a serious concern?","It can negatively affect human health, causing respiratory disease, cardiovascular disease, stroke, lung cancer, and other problems."],
+["general","Why is indoor air quality important?","People spend a lot of time indoors, and poor indoor air quality may expose them to harmful airborne pollutants."],
+["general","Main purpose of the proposed device?","To improve indoor air quality while providing real-time air-quality information."],
+["general","What is the proposed device?","A solar-powered air purifier with real-time AQI monitoring, rechargeable battery storage, and Bluetooth mobile app connectivity."],
+["general","Main features of the proposed system?","Air purification, real-time AQI monitoring, solar-powered operation, rechargeable battery storage, and Bluetooth-based mobile connectivity."],
+["general","What does AQI stand for?","Air Quality Index."],
+["general","Purpose of AQI?","To indicate the condition or quality of the surrounding air."],
+["general","Why is AQI monitoring important?","It helps users tell whether air quality is good, moderate, unhealthy, or potentially harmful."],
+["general","What are PM2.5 and PM10?","Types of particulate matter — very small airborne particles that contribute to air pollution."],
+["general","Why do PM2.5 and PM10 matter in air-quality monitoring?","Their concentration indicates the level of particulate pollution present in the air."],
+["general","Purpose of the air purifier?","To remove or reduce harmful airborne particles and pollutants from indoor air."],
+["general","What filter type can be used in the purifier?","HEPA and activated carbon filters."],
+["general","Purpose of a HEPA filter?","To capture small airborne particles such as dust and other particulate pollutants."],
+["general","Purpose of activated carbon?","To help reduce odors, gases, and certain chemical pollutants in the air."],
+["general","Limitation of ordinary commercial air purifiers?","Many depend fully on conventional electricity and may not offer real-time air-quality monitoring."],
+["general","Limitation of a standalone AQI monitor?","It can monitor air quality but cannot purify the air."],
+["general","Limitation of traditional exhaust fans?","They improve air circulation but don't necessarily filter harmful airborne particles."],
+["general","Possible disadvantage of natural ventilation?","It may allow outdoor pollutants to enter indoor spaces."],
+["general","How is the device different from an ordinary air purifier?","It combines air purification with AQI monitoring, solar power, battery storage, and Bluetooth mobile monitoring."],
+["general","How is the device different from an AQI monitor?","An AQI monitor only measures air quality; the proposed system can also help purify the air."],
+["general","What makes the device innovative?","Integrating several technologies and functions into one system."],
+["general","What technologies are integrated?","Air purification, AQI monitoring, solar energy, rechargeable battery storage, and Bluetooth connectivity."],
+["general","Is air purification itself new technology?","No — the innovation mainly comes from combining several existing technologies into one integrated prototype."],
+["general","Why does the system use solar power?","To use renewable energy and reduce dependence on conventional electricity."],
+["general","Purpose of the solar panel?","To convert sunlight into electrical energy that can help power the system or charge the battery."],
+["general","Purpose of the rechargeable battery?","To store energy so the device keeps operating when solar energy is unavailable or insufficient."],
+["general","What happens with little or no sunlight?","The rechargeable battery supplies stored energy to the system."],
+["general","Why is renewable energy important here?","It makes the system more sustainable and reduces dependence on conventional energy sources."],
+["general","Why does the system use Bluetooth?","To allow wireless communication between the device and the mobile app."],
+["general","Purpose of the mobile application?","To let users check air-quality information through their mobile devices."],
+["general","Can Bluetooth monitor the device from anywhere in the world?","No — Bluetooth monitoring only works within its supported connection range."],
+["general","What does remote monitoring mean in this study?","Users can wirelessly check air-quality info through the mobile app while within Bluetooth range."],
+["general","Why is mobile monitoring more convenient than checking manually?","Users can view air-quality info without directly approaching or inspecting the device."],
+["general","Who can benefit from the proposed system?","Students, teachers, employees, health workers, and other people who use indoor facilities."],
+["general","Where can the device be used?","Schools, classrooms, offices, libraries, health centers, and other indoor facilities."],
+["general","Why is the device suitable for classrooms?","Classrooms are enclosed spaces where many people spend long periods, making indoor air quality important."],
+["general","Main benefit of combining purification and monitoring?","The system can both improve air quality and inform users about its current condition."],
+["general","Why does the study focus on both purification and monitoring?","Cleaning the air and knowing its current condition together give a more complete approach to managing indoor air quality."],
+["general","Main goal of the study?","To design and develop a practical, sustainable air-purification system with real-time air-quality monitoring."],
+["sdg","What is SDG 3?","Good Health and Well-Being."],
+["sdg","How does the study support SDG 3?","By helping promote healthier indoor environments through air purification and air-quality monitoring."],
+["sdg","Which feature connects mainly to SDG 3?","Air purification and real-time AQI monitoring."],
+["sdg","Why is cleaner indoor air related to SDG 3?","It can reduce people's exposure to harmful airborne pollutants and support health and well-being."],
+["sdg","What is SDG 7?","Affordable and Clean Energy."],
+["sdg","How does the study support SDG 7?","Through the use of solar energy and rechargeable battery storage."],
+["sdg","Which feature connects mainly to SDG 7?","The solar-powered operation."],
+["sdg","Why is solar energy connected to SDG 7?","Because it's a renewable and cleaner source of energy."],
+["sdg","What is SDG 11?","Sustainable Cities and Communities."],
+["sdg","How does the study support SDG 11?","By promoting improved air quality and healthier indoor environments in schools, offices, libraries, and other facilities."],
+["sdg","Which feature connects mainly to SDG 11?","Air-quality improvement and real-time air-quality monitoring."],
+["sdg","Why is air quality related to sustainable communities?","Maintaining cleaner, healthier environments contributes to safer, more sustainable communities."],
+["sdg","What three SDGs does the study support?","SDG 3 (Good Health and Well-Being), SDG 7 (Affordable and Clean Energy), and SDG 11 (Sustainable Cities and Communities)."],
+["sdg","Why were SDG 3, 7, and 11 chosen?","They represent the health, renewable-energy, and environmental aspects of the proposed system."],
+["sdg","Which SDG connects mainly to health?","SDG 3."],
+["sdg","Which SDG connects mainly to solar energy?","SDG 7."],
+["sdg","Which SDG connects mainly to sustainable communities and air quality?","SDG 11."],
+["purpose","Why was this study proposed?","To address the limitations of existing air-quality tech by integrating purification, monitoring, renewable energy, and wireless connectivity into one system."],
+["purpose","What problem with existing technologies does it address?","Existing tech often provides only one function — purification, monitoring, or ventilation — while this system combines several."],
+["purpose","Why is the device considered practical?","It combines multiple useful functions usable in common indoor facilities."],
+["purpose","Why is the device considered sustainable?","It incorporates renewable solar energy and rechargeable battery storage."],
+["purpose","What's the significance of the mobile application?","It makes air-quality information more accessible and convenient for users."],
+["purpose","What's the significance of real-time monitoring?","It lets users immediately become aware of changes in air quality."],
+["purpose","How can the system promote healthier indoor environments?","By helping reduce airborne pollutants while informing users about current air-quality conditions."],
+["purpose","Why combine renewable energy with air purification?","It lets the system address air quality while reducing dependence on conventional electricity."],
+["panel","Why not just use an ordinary commercial air purifier?","The proposed system adds functions like AQI monitoring, solar-powered operation, battery storage, and Bluetooth mobile connectivity."],
+["panel","Why not just use an AQI monitor?","An AQI monitor can detect air quality but cannot actively purify the air."],
+["panel","Why not just use an exhaust fan?","An exhaust fan mainly moves air and doesn't necessarily filter harmful particles or provide real-time AQI monitoring."],
+["panel","Greatest advantage of the proposed system?","It combines air purification, environmental monitoring, renewable energy, and mobile accessibility in one device."],
+["panel","Possible limitations of the proposed system?","Bluetooth range, sensor accuracy, battery capacity, solar-energy availability, and the limited area the prototype can effectively purify."],
+["panel","What happens if the Bluetooth connection is lost?","Mobile monitoring may become temporarily unavailable until the device reconnects."],
+["panel","What happens if the battery runs out?","The device may stop operating until sufficient energy is available again."],
+["panel","What can affect the amount of solar energy produced?","Sunlight availability, weather conditions, solar-panel placement, and panel capacity."],
+["panel","Can the prototype completely eliminate indoor air pollution?","No — it's designed to help reduce airborne pollutants and improve air quality, not eliminate all pollution."],
+["panel","Why avoid claiming the device removes all pollutants?","Air purifier effectiveness depends on filter performance, room size, pollutant concentration, airflow, and operating time."],
+["panel","How can the purifier's effectiveness be tested?","By comparing air-quality or particulate readings before and after operating it for a set period."],
+["panel","What readings could be compared during testing?","AQI, PM2.5, PM10, or other measured air-quality indicators."],
+["panel","What would indicate the purifier is effective?","A measurable improvement in air-quality readings or a decrease in particulate matter after operation."],
+["panel","Why test the device in a controlled area?","To reduce outside factors that could affect results and make the comparison more reliable."],
+["panel","Overall contribution of the study?","An integrated approach to indoor air-quality management, combining purification, monitoring, renewable energy, battery storage, and wireless mobile accessibility."],
+["quick","AQI means?","Air Quality Index."],
+["quick","PM means?","Particulate Matter."],
+["quick","Main renewable energy source?","Solar energy."],
+["quick","Energy storage component?","Rechargeable battery."],
+["quick","Wireless communication technology?","Bluetooth."],
+["quick","Main filtration technology?","HEPA filtration."],
+["quick","Additional filtration material?","Activated carbon."],
+["quick","SDG 3?","Good Health and Well-Being."],
+["quick","SDG 7?","Affordable and Clean Energy."],
+["quick","SDG 11?","Sustainable Cities and Communities."],
+["quick","Main purpose of AQI monitoring?","To determine and communicate the condition of the air."],
+["quick","Main purpose of air purification?","To reduce or remove airborne pollutants."],
+["quick","Main purpose of the solar panel?","To generate electrical energy from sunlight."],
+["quick","Main purpose of the rechargeable battery?","To store electrical energy."],
+["quick","Main purpose of Bluetooth?","Wireless communication between the device and mobile app."],
+["quick","Main purpose of the mobile application?","To let users monitor air-quality information."],
+["quick","Main target environment of the device?","Indoor environments."],
+["quick","Examples of intended locations?","Classrooms, schools, offices, libraries, and health centers."],
+["quick","Main environmental issue?","Air pollution."],
+["quick","Main innovation of the study?","Integrating air purification, AQI monitoring, solar energy, battery storage, and Bluetooth mobile connectivity into one system."]
+].map((d,i)=>({id:i+1,cat:d[0],q:d[1],a:d[2]}));
+
+const CATS = [
+  {key:"all",label:"All"},
+  {key:"general",label:"General"},
+  {key:"sdg",label:"SDG"},
+  {key:"purpose",label:"Purpose"},
+  {key:"panel",label:"Panel"},
+  {key:"quick",label:"Quick ID"}
+];
+
+let activeCat = "all";
+let flashOrder = DATA.map(d=>d.id);
+let flashIdx = 0;
+
+let quizOrder = [];
+let quizIdx = 0;
+let quizAnswered = false;
+let quizGoodCount = 0;
+let quizBadCount = 0;
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function filteredData(){
+  return activeCat==="all" ? DATA : DATA.filter(d=>d.cat===activeCat);
+}
+
+function buildChips(){
+  const row = document.getElementById('chipRow');
+  row.innerHTML = "";
+  CATS.forEach(c=>{
+    const b = document.createElement('button');
+    b.className = 'chip' + (c.key===activeCat?' active':'');
+    b.textContent = c.label;
+    b.onclick = ()=>{ activeCat = c.key; onFilterChange(); };
+    row.appendChild(b);
+  });
+}
+
+function onFilterChange(){
+  buildChips();
+  flashOrder = filteredData().map(d=>d.id);
+  flashIdx = 0;
+  renderFlash();
+  restartQuiz();
+  renderBrowse();
+}
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.panel).classList.add('active');
+  });
+});
+
+/* ---------- FLASHCARDS ---------- */
+function getFlashCard(){
+  const id = flashOrder[flashIdx];
+  return DATA.find(d=>d.id===id);
+}
+function renderFlash(){
+  document.getElementById('flashInput').value = "";
+  document.getElementById('flashReveal').classList.remove('show');
+  if(flashOrder.length===0){
+    document.getElementById('flashContent').textContent = "No cards in this category.";
+    document.getElementById('flashTag').textContent = "";
+    document.getElementById('flashId').textContent = "0 / 0";
+    document.getElementById('flashProgress').style.width = "0%";
+    return;
+  }
+  const c = getFlashCard();
+  document.getElementById('flashTag').textContent = c.cat;
+  document.getElementById('flashId').textContent = (flashIdx+1)+" / "+flashOrder.length;
+  document.getElementById('flashContent').textContent = c.q;
+  document.getElementById('flashProgress').style.width = (((flashIdx+1)/flashOrder.length)*100)+"%";
+  document.getElementById('flashInput').focus();
+}
+function submitFlash(){
+  if(flashOrder.length===0) return;
+  const c = getFlashCard();
+  const val = document.getElementById('flashInput').value.trim();
+  document.getElementById('flashYourAns').textContent = val ? val : "(left blank)";
+  document.getElementById('flashCorrectAns').textContent = c.a;
+  document.getElementById('flashReveal').classList.add('show');
+}
+function nextCard(){ if(flashOrder.length===0) return; flashIdx = (flashIdx+1)%flashOrder.length; renderFlash(); }
+function prevCard(){ if(flashOrder.length===0) return; flashIdx = (flashIdx-1+flashOrder.length)%flashOrder.length; renderFlash(); }
+function shuffleCards(){
+  for(let i=flashOrder.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [flashOrder[i],flashOrder[j]] = [flashOrder[j],flashOrder[i]];
+  }
+  flashIdx = 0; renderFlash();
+}
+
+/* ---------- QUIZ ---------- */
+function restartQuiz(){
+  quizOrder = filteredData().map(d=>d.id);
+  for(let i=quizOrder.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [quizOrder[i],quizOrder[j]] = [quizOrder[j],quizOrder[i]];
+  }
+  quizIdx = 0; quizAnswered = false; quizGoodCount = 0; quizBadCount = 0;
+  renderQuiz();
+}
+function getQuizCard(){
+  const id = quizOrder[quizIdx];
+  return DATA.find(d=>d.id===id);
+}
+function renderQuiz(){
+  document.getElementById('quizTotal').textContent = quizOrder.length;
+  document.getElementById('quizGood').textContent = quizGoodCount;
+  document.getElementById('quizBad').textContent = quizBadCount;
+  document.getElementById('quizCount').textContent = quizGoodCount+quizBadCount;
+  document.getElementById('quizProgress').style.width = quizOrder.length ? (((quizGoodCount+quizBadCount)/quizOrder.length)*100)+"%" : "0%";
+  updateGauge();
+
+  const stage = document.getElementById('quizCard');
+  const judgeRow = document.getElementById('judgeRow');
+  const hint = document.getElementById('quizHint');
+  const answerRow = document.getElementById('quizAnswerRow');
+  const reveal = document.getElementById('quizReveal');
+
+  if(quizOrder.length===0 || quizIdx >= quizOrder.length){
+    stage.innerHTML = '<div class="quiz-done"><div class="big mono">'+quizGoodCount+' / '+quizOrder.length+'</div><div class="hint" style="margin-top:8px;">Questions you knew on this pass</div></div>';
+    judgeRow.style.display = 'none';
+    answerRow.style.display = 'none';
+    reveal.classList.remove('show');
+    hint.textContent = 'Quiz complete — hit restart to go again';
+    return;
+  }
+  answerRow.style.display = 'flex';
+  const c = getQuizCard();
+  stage.innerHTML = '<span class="tag">'+c.cat+'</span>'+
+    '<span class="id mono">'+(quizIdx+1)+' / '+quizOrder.length+'</span>'+
+    '<div class="face-label">Question</div>'+
+    '<div class="content">'+escapeHtml(c.q)+'</div>';
+  document.getElementById('quizInput').value = "";
+  reveal.classList.remove('show');
+  judgeRow.style.display = 'none';
+  hint.textContent = 'Type your answer and submit to check yourself';
+  setTimeout(()=>document.getElementById('quizInput').focus(),0);
+}
+function submitQuiz(){
+  if(quizOrder.length===0 || quizIdx>=quizOrder.length || quizAnswered) return;
+  const c = getQuizCard();
+  const val = document.getElementById('quizInput').value.trim();
+  document.getElementById('quizYourAns').textContent = val ? val : "(left blank)";
+  document.getElementById('quizCorrectAns').textContent = c.a;
+  document.getElementById('quizReveal').classList.add('show');
+  document.getElementById('judgeRow').style.display = 'flex';
+  document.getElementById('quizHint').textContent = 'Grade yourself, then move on';
+  quizAnswered = true;
+}
+function judge(knewIt){
+  if(knewIt) quizGoodCount++; else quizBadCount++;
+  quizIdx++;
+  quizAnswered = false;
+  renderQuiz();
+}
+
+/* ---------- GAUGE ---------- */
+function updateGauge(){
+  const total = quizGoodCount + quizBadCount;
+  const pct = total>0 ? quizGoodCount/total : 0;
+  const arc = document.getElementById('gaugeArc');
+  const needle = document.getElementById('gaugeNeedle');
+  const circumference = 188.5;
+  arc.setAttribute('stroke-dasharray', circumference);
+  arc.setAttribute('stroke-dashoffset', circumference - (circumference*pct));
+  let color = '#E1553D';
+  if(pct >= .8) color = '#4CC38A';
+  else if(pct >= .5) color = '#E8A33D';
+  arc.setAttribute('stroke', color);
+  const angle = -90 + (pct*180);
+  needle.setAttribute('transform','rotate('+angle+' 70 75)');
+  document.getElementById('gaugeText').textContent = total+' / '+quizOrder.length+' answered';
+}
+
+/* ---------- BROWSE ---------- */
+function renderBrowse(){
+  const term = document.getElementById('searchBox').value.trim().toLowerCase();
+  const list = document.getElementById('qaList');
+  let items = filteredData();
+  if(term){
+    items = items.filter(d => d.q.toLowerCase().includes(term) || d.a.toLowerCase().includes(term));
+  }
+  if(items.length===0){
+    list.innerHTML = '<div class="empty-state">No questions match your search.</div>';
+    return;
+  }
+  list.innerHTML = items.map(d=>
+    '<div class="qa-item"><div class="qtag mono">'+d.cat+' · #'+d.id+'</div><div class="q">'+d.q+'</div><div class="a">'+d.a+'</div></div>'
+  ).join('');
+}
+
+/* ---------- INIT ---------- */
+buildChips();
+renderFlash();
+restartQuiz();
+renderBrowse();
+</script>
+</body>
+</html>
